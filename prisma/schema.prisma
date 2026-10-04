@@ -181,3 +181,19 @@ model ApplicationEvent {
   message        String
   createdAt      DateTime    @default(now())
 }
+
+
+model AutomationRun {
+  id               String   @id @default(cuid())
+  startedAt        DateTime @default(now())
+  finishedAt       DateTime?
+  trigger          String   @default("manual")
+  status           String   @default("running")
+  searchesRun      Int      @default(0)
+  jobsFound        Int      @default(0)
+  jobsAnalyzed     Int      @default(0)
+  applicationsSent Int      @default(0)
+  packetsReady     Int      @default(0)
+  errors           String   @default("[]")
+  summary          String   @default("")
+}
