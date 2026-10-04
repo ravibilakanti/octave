@@ -51,8 +51,8 @@ model VerificationToken {
 
 model Profile {
   id                 String    @id @default(cuid())
-  userId             String    @unique
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId             String?   @unique
+  user               User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
   fullName           String    @default("")
   email              String    @default("")
   phone              String?
@@ -102,7 +102,7 @@ model Experience {
 
 model Education {
   id         String  @id @default(cuid())
-  profileId  String
+  profileId  String   @default("me")
   profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   school     String
   degree     String
@@ -169,7 +169,7 @@ model SavedSearch {
 
 model Job {
   id             String   @id @default(cuid())
-  profileId      String
+  profileId      String   @default("me")
   profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   externalId     String
   provider       String
@@ -236,7 +236,7 @@ model ApplicationEvent {
 
 model AutomationRun {
   id               String   @id @default(cuid())
-  profileId        String
+  profileId        String   @default("me")
   profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   startedAt        DateTime @default(now())
   finishedAt       DateTime?
