@@ -1,0 +1,29 @@
+name: Octave CI
+
+on:
+  push:
+    branches: ["main", "feature/**"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: "file:./ci.db"
+      AUTH_SECRET: "ci-test-secret"
+      AUTH_GOOGLE_ID: ""
+      AUTH_GOOGLE_SECRET: ""
+      AUTH_APPLE_ID: ""
+      AUTH_APPLE_SECRET: ""
+      EMAIL_SERVER: ""
+      EMAIL_FROM: ""
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm install
+      - run: npx prisma generate
+      - run: npm run build
