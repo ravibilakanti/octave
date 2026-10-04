@@ -4,7 +4,7 @@ import { prisma } from "@/lib/db";
 import { analyzeFitment } from "@/lib/fitment";
 import { searchJobs } from "@/lib/jobs/search";
 import type { JobListing } from "@/lib/jobs/types";
-import { getProfileBundle } from "@/lib/profile";
+import { getProfileBundle, getProfileBundleById } from "@/lib/profile";
 import { toJson } from "@/lib/utils";
 
 export async function upsertListings(listings: JobListing[], profileId: string) {
@@ -37,15 +37,15 @@ export async function upsertListings(listings: JobListing[], profileId: string) 
   return jobs;
 }
 
-export async function searchAndStore(params: { query: string; location?: string; remoteOnly?: boolean }) {
-  const profile = await getProfileBundle();
+export async function searchAndStore(params: { query: string; location?: string; remoteOnly?: boolean }, profileId?: string) {
+  const profile = profileId ? await getProfileBundleById(profileId) : await getProfileBundle();
   const { listings, errors } = await searchJobs(params);
   const jobs = await upsertListings(listings, profile.id);
   return { jobs, errors, found: listings.length };
 }
 
-export async function analyzeJob(jobId: string) {
-  const profile = await getProfileBundle();
+export async function analyzeJob(jobId: string, profileId?: string) {
+  const profile = profileId ? await getProfileBundleById(profileId) : await getProfileBundle();
   const job = await prisma.job.findFirstOrThrow({ where: { id: jobId, profileId: profile.id } });
   const result = await analyzeFitment(profile, job);
   const analysis = await prisma.fitment.create({
@@ -58,26 +58,26 @@ export async function analyzeJob(jobId: string) {
   return { job, analysis, result };
 }
 
-export async function analyzeUnscored(limit = 15, jobIds?: string[]) {
-  const profile = await getProfileBundle();
+export async function analyzeUnscored(limit = 15, jobIds?: string[], profileId?: string) {
+  const profile = profileId ? await getProfileBundleById(profileId) : await getProfileBundle();
   const jobs = await prisma.job.findMany({
     where: { profileId: profile.id, ...(jobIds?.length ? { id: { in: jobIds } } : {}), analyses: { none: {} } },
     orderBy: { createdAt: "desc" }, take: limit,
   });
   const results = [];
-  for (const job of jobs) results.push(await analyzeJob(job.id));
+  for (const job of jobs) results.push(await analyzeJob(job.id, profile.id));
   return results;
 }
 
-export async function prepareAndApply(jobId: string, opts?: { force?: boolean }) {
-  const profile = await getProfileBundle();
+export async function prepareAndApply(jobId: string, opts?: { force?: boolean }, profileId?: string) {
+  const profile = profileId ? await getProfileBundleById(profileId) : await getProfileBundle();
   const job = await prisma.job.findFirstOrThrow({
     where: { id: jobId, profileId: profile.id },
     include: { analyses: { orderBy: { createdAt: "desc" }, take: 1 } },
   });
   const minScore = profile.minFitScore ?? 8;
   let score = job.analyses[0]?.score;
-  if (score == null) score = (await analyzeJob(jobId)).result.score;
+  if (score == null) score = (await analyzeJob(jobId, profile.id)).result.score;
   if (!opts?.force && score < minScore) {
     throw new Error(`Fitment ${score}/10 is below the ${minScore}/10 bar. Use force to override.`);
   }
@@ -116,8 +116,8 @@ export async function prepareAndApply(jobId: string, opts?: { force?: boolean })
   });
 }
 
-export async function autoApplyEligible(jobIds?: string[]) {
-  const profile = await getProfileBundle();
+export async function autoApplyEligible(jobIds?: string[], profileId?: string) {
+  const profile = profileId ? await getProfileBundleById(profileId) : await getProfileBundle();
   if (!profile.autoApply) {
     return { skipped: true, reason: "auto-apply is off", applied: [] as string[], ready: [] as string[], errors: [] as Array<{jobId:string;message:string}> };
   }
@@ -135,7 +135,7 @@ export async function autoApplyEligible(jobIds?: string[]) {
   const applied: string[] = [], ready: string[] = [], errors: Array<{jobId:string;message:string}> = [];
   for (const job of eligible) {
     try {
-      const application = await prepareAndApply(job.id);
+      const application = await prepareAndApply(job.id, undefined, profile.id);
       (application.status === "applied" ? applied : ready).push(job.id);
     } catch (e) {
       errors.push({ jobId: job.id, message: e instanceof Error ? e.message : String(e) });
