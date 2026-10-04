@@ -24,8 +24,9 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   const body = await request.json();
-  const profile = await prisma.profile.upsert({
-    where: { id: "me" },
+  const current = await getProfileBundle();
+  const profile = await prisma.profile.update({
+    where: { id: current.id },
     update: {
       fullName: body.fullName ?? "",
       email: body.email ?? "",
@@ -47,11 +48,10 @@ export async function PUT(request: Request) {
       autoApply: Boolean(body.autoApply),
       minFitScore: Number(body.minFitScore ?? 8),
     },
-    create: { id: "me" },
   });
 
   if (Array.isArray(body.experiences)) {
-    await prisma.experience.deleteMany({ where: { profileId: "me" } });
+    await prisma.experience.deleteMany({ where: { profileId: current.id } });
     if (body.experiences.length) {
       await prisma.experience.createMany({
         data: body.experiences.map((e: Record<string, unknown>, i: number) => ({
