@@ -3,19 +3,15 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
-  const user = await prisma.user.upsert({
-    where: { email: "local@example.com" },
-    update: {},
-    create: { email: "local@example.com", name: "Local User" },
-  });
-
+  // Keep the legacy singleton available so the first real authenticated user
+  // can claim an existing local profile without losing its data.
   await prisma.profile.upsert({
-    where: { userId: user.id },
+    where: { id: "me" },
     update: {},
     create: {
-      userId: user.id,
-      fullName: user.name || "",
-      email: user.email || "",
+      id: "me",
+      fullName: "",
+      email: "",
       summary: "",
       minFitScore: 8,
       autoApply: false,
