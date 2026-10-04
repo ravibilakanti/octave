@@ -103,7 +103,7 @@ model Experience {
 
 model Education {
   id         String  @id @default(cuid())
-  profileId  String   @default("me")
+  profileId  String
   profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   school     String
   degree     String
