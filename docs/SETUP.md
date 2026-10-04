@@ -91,7 +91,7 @@ For a local-only installation, keep the app bound to your own machine and do not
 After configuring your profile and job providers:
 
 ```powershell
-.scriptsinstall-windows-schedule.ps1 -ProjectPath "C:Usersaviboctave"
+.\scripts\install-windows-schedule.ps1 -ProjectPath "C:\Users\ravib\octave"
 ```
 
 This creates a Windows Task Scheduler task named **Octave Daily Job Search** that runs every day at **9:00 PM**.
