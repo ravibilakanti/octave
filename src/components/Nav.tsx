@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { signOut } from "next-auth/react";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -47,6 +48,9 @@ export function Nav() {
             );
           })}
         </nav>
+        <button onClick={() => signOut({ callbackUrl: "/signin" })} className="ml-3 rounded-full border border-[#2a3654] px-3 py-1.5 text-sm text-[#9aa8c7] hover:text-white">
+          Sign out
+        </button>
       </div>
     </header>
   );
