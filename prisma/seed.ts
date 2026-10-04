@@ -3,6 +3,8 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 async function main() {
+  // Keep the legacy singleton available so the first real authenticated user
+  // can claim an existing local profile without losing its data.
   await prisma.profile.upsert({
     where: { id: "me" },
     update: {},

@@ -24,9 +24,10 @@ export async function GET() {
 
 export async function PUT(request: Request) {
   const body = await request.json();
-  const profile = await prisma.profile.upsert({
-    where: { id: "me" },
-    update: {
+  const current = await getProfileBundle();
+  const profile = await prisma.profile.update({
+    where: { id: current.id },
+    data: {
       fullName: body.fullName ?? "",
       email: body.email ?? "",
       phone: body.phone,
@@ -47,15 +48,14 @@ export async function PUT(request: Request) {
       autoApply: Boolean(body.autoApply),
       minFitScore: Number(body.minFitScore ?? 8),
     },
-    create: { id: "me" },
   });
 
   if (Array.isArray(body.experiences)) {
-    await prisma.experience.deleteMany({ where: { profileId: "me" } });
+    await prisma.experience.deleteMany({ where: { profileId: current.id } });
     if (body.experiences.length) {
       await prisma.experience.createMany({
         data: body.experiences.map((e: Record<string, unknown>, i: number) => ({
-          profileId: "me",
+          profileId: current.id,
           company: String(e.company ?? ""),
           title: String(e.title ?? ""),
           location: e.location ? String(e.location) : null,
@@ -71,11 +71,11 @@ export async function PUT(request: Request) {
   }
 
   if (Array.isArray(body.education)) {
-    await prisma.education.deleteMany({ where: { profileId: "me" } });
+    await prisma.education.deleteMany({ where: { profileId: current.id } });
     if (body.education.length) {
       await prisma.education.createMany({
         data: body.education.map((e: Record<string, unknown>, i: number) => ({
-          profileId: "me",
+          profileId: current.id,
           school: String(e.school ?? ""),
           degree: String(e.degree ?? ""),
           field: e.field ? String(e.field) : null,
@@ -89,11 +89,11 @@ export async function PUT(request: Request) {
   }
 
   if (Array.isArray(body.skills)) {
-    await prisma.skill.deleteMany({ where: { profileId: "me" } });
+    await prisma.skill.deleteMany({ where: { profileId: current.id } });
     if (body.skills.length) {
       await prisma.skill.createMany({
         data: body.skills.map((s: Record<string, unknown>) => ({
-          profileId: "me",
+          profileId: current.id,
           name: String(s.name ?? s),
           category: String(s.category ?? "core"),
           level: String(s.level ?? "proficient"),
@@ -103,11 +103,11 @@ export async function PUT(request: Request) {
   }
 
   if (Array.isArray(body.certifications)) {
-    await prisma.certification.deleteMany({ where: { profileId: "me" } });
+    await prisma.certification.deleteMany({ where: { profileId: current.id } });
     if (body.certifications.length) {
       await prisma.certification.createMany({
         data: body.certifications.map((c: Record<string, unknown>) => ({
-          profileId: "me",
+          profileId: current.id,
           name: String(c.name ?? ""),
           issuer: c.issuer ? String(c.issuer) : null,
           issuedOn: c.issuedOn ? String(c.issuedOn) : null,
@@ -119,11 +119,11 @@ export async function PUT(request: Request) {
   }
 
   if (Array.isArray(body.projects)) {
-    await prisma.project.deleteMany({ where: { profileId: "me" } });
+    await prisma.project.deleteMany({ where: { profileId: current.id } });
     if (body.projects.length) {
       await prisma.project.createMany({
         data: body.projects.map((p: Record<string, unknown>) => ({
-          profileId: "me",
+          profileId: current.id,
           name: String(p.name ?? ""),
           url: p.url ? String(p.url) : null,
           description: String(p.description ?? ""),
