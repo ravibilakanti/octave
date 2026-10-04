@@ -80,6 +80,9 @@ model Profile {
   certifications     Certification[]
   projects           Project[]
   resumeVersions     ResumeVersion[]
+  savedSearches      SavedSearch[]
+  jobs               Job[]
+  automationRuns     AutomationRun[]
 }
 
 model Experience {
@@ -122,7 +125,7 @@ model Skill {
 model Certification {
   id         String  @id @default(cuid())
   profileId  String
-  profile    Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
   name       String
   issuer     String?
   issuedOn   String?
@@ -131,13 +134,13 @@ model Certification {
 }
 
 model Project {
-  id          String  @id @default(cuid())
+  id          String   @id @default(cuid())
   profileId   String
-  profile     Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profile     Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   name        String
   url         String?
   description String
-  highlights  String  @default("[]")
+  highlights  String   @default("[]")
 }
 
 model ResumeVersion {
@@ -153,16 +156,21 @@ model ResumeVersion {
 }
 
 model SavedSearch {
-  id        String   @id @default(cuid())
-  name      String
-  query     String
-  location  String   @default("")
-  remoteOnly Boolean @default(false)
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  profileId  String
+  profile    Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  name       String
+  query      String
+  location   String   @default("")
+  remoteOnly Boolean  @default(false)
+  active     Boolean  @default(true)
+  createdAt  DateTime @default(now())
 }
 
 model Job {
   id             String   @id @default(cuid())
+  profileId      String
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   externalId     String
   provider       String
   title          String
@@ -175,14 +183,14 @@ model Job {
   description    String
   salary         String?
   postedAt       String?
-  rawJson        String   @default("{}")
+  rawJson         String  @default("{}")
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   analyses       Fitment[]
   applications   Application[]
   resumeVersions ResumeVersion[]
 
-  @@unique([provider, externalId])
+  @@unique([profileId, provider, externalId])
 }
 
 model Fitment {
@@ -190,11 +198,11 @@ model Fitment {
   jobId         String
   job           Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   score         Float
-  recommendation String  @default("review")
+  recommendation String   @default("review")
   summary       String
   strengths     String   @default("[]")
-  gaps          String   @default("[]")
-  keywordHits   String   @default("[]")
+  gaps          String     @default("[]")
+  keywordHits   String     @default("[]")
   breakdown     String   @default("{}")
   model         String?
   createdAt     DateTime @default(now())
@@ -226,9 +234,10 @@ model ApplicationEvent {
   createdAt      DateTime    @default(now())
 }
 
-
 model AutomationRun {
   id               String   @id @default(cuid())
+  profileId        String
+  profile          Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   startedAt        DateTime @default(now())
   finishedAt       DateTime?
   trigger          String   @default("manual")
