@@ -72,3 +72,54 @@ Remove-Item prisma/dev.db -ErrorAction SilentlyContinue
 npx prisma db push
 npm run db:seed
 ```
+
+
+## Authentication
+
+Octave supports three account options:
+
+- **Google** — configure `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
+- **Apple** — configure `AUTH_APPLE_ID` and `AUTH_APPLE_SECRET`.
+- **Personal email** — configure `EMAIL_SERVER` and `EMAIL_FROM` for passwordless one-time sign-in links.
+
+Also set a strong random `AUTH_SECRET`. Octave does not receive or store Google/Apple passwords.
+
+For a local-only installation, keep the app bound to your own machine and do not expose the authentication callback endpoints publicly without HTTPS and a production deployment configuration.
+
+## Daily 9 PM job automation (Windows)
+
+After configuring your profile and job providers:
+
+```powershell
+.scriptsinstall-windows-schedule.ps1 -ProjectPath "C:Usersaviboctave"
+```
+
+This creates a Windows Task Scheduler task named **Octave Daily Job Search** that runs every day at **9:00 PM**.
+
+Test the same workflow manually first:
+
+```powershell
+npm run automation:daily
+```
+
+The run searches active saved searches (or a profile-based fallback query), stores only jobs belonging to the signed-in profile, analyzes new jobs, and auto-applies only when **Auto Apply** is enabled and the fit score meets the profile threshold. `MAX_AUTO_APPLICATIONS_PER_RUN` limits applications per run.
+
+If automatic email submission is not available for a job, Octave creates a **ready packet** instead of pretending the application was submitted.
+
+## Local authentication configuration
+
+For Google and Apple, create OAuth applications with callback URLs for your local Octave origin and provider requirements. For email magic links, use an SMTP account that can send from the configured `EMAIL_FROM`.
+
+Required authentication variables:
+
+```text
+AUTH_SECRET
+AUTH_GOOGLE_ID
+AUTH_GOOGLE_SECRET
+AUTH_APPLE_ID
+AUTH_APPLE_SECRET
+EMAIL_SERVER
+EMAIL_FROM
+```
+
+Provider credentials may be left empty for providers you do not intend to enable, but at least one sign-in method should be configured.
