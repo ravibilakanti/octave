@@ -2,13 +2,9 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import type { ProfileBundle } from "@/lib/profile-text";
 
-export async function getProfileBundle(): Promise<ProfileBundle> {
-  const session = await auth();
-  const userId = session?.user?.id;
-  if (!userId) throw new Error("Authentication required.");
-
+export async function getProfileBundleById(profileId: string): Promise<ProfileBundle> {
   const existing = await prisma.profile.findUnique({
-    where: { userId },
+    where: { id: profileId },
     include: {
       experiences: { orderBy: { sortOrder: "asc" } },
       education: { orderBy: { sortOrder: "asc" } },
@@ -17,9 +13,19 @@ export async function getProfileBundle(): Promise<ProfileBundle> {
       projects: true,
     },
   });
-  if (existing) return existing;
+  if (!existing) throw new Error("Profile not found.");
+  return existing;
+}
 
-  return prisma.profile.create({
+export async function getProfileBundle(): Promise<ProfileBundle> {
+  const session = await auth();
+  const userId = session?.user?.id;
+  if (!userId) throw new Error("Authentication required.");
+
+  const existing = await prisma.profile.findUnique({ where: { userId } });
+  if (existing) return getProfileBundleById(existing.id);
+
+  const created = await prisma.profile.create({
     data: {
       userId,
       fullName: session.user?.name || "",
@@ -27,12 +33,6 @@ export async function getProfileBundle(): Promise<ProfileBundle> {
       minFitScore: 8,
       autoApply: false,
     },
-    include: {
-      experiences: true,
-      education: true,
-      skills: true,
-      certifications: true,
-      projects: true,
-    },
   });
+  return getProfileBundleById(created.id);
 }
