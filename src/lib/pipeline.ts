@@ -80,9 +80,9 @@ export async function analyzeJob(jobId: string) {
   return { job, analysis, result };
 }
 
-export async function analyzeUnscored(limit = 15) {
+export async function analyzeUnscored(limit = 15, jobIds?: string[]) {
   const jobs = await prisma.job.findMany({
-    where: { analyses: { none: {} } },
+    where: { ...(jobIds?.length ? { id: { in: jobIds } } : {}), analyses: { none: {} } },
     orderBy: { createdAt: "desc" },
     take: limit,
   });
@@ -175,29 +175,34 @@ export async function prepareAndApply(jobId: string, opts?: { force?: boolean })
   });
 }
 
-export async function autoApplyEligible() {
+export async function autoApplyEligible(jobIds?: string[]) {
   const profile = await getProfileBundle();
-  if (!profile.autoApply) return { skipped: true, reason: "auto-apply is off", applied: [] as string[] };
+  if (!profile.autoApply) return { skipped: true, reason: "auto-apply is off", applied: [] as string[], ready: [] as string[], errors: [] as Array<{ jobId: string; message: string }> };
 
+  const maxDaily = Math.max(1, Number(process.env.MAX_AUTO_APPLICATIONS_PER_RUN || 10));
   const min = profile.minFitScore;
   const eligible = await prisma.job.findMany({
     where: {
+      ...(jobIds?.length ? { id: { in: jobIds } } : {}),
       applications: { none: {} },
       analyses: { some: { score: { gte: min } } },
     },
     include: { analyses: { orderBy: { createdAt: "desc" }, take: 1 } },
-    take: 10,
+    orderBy: { createdAt: "desc" },
+    take: maxDaily,
   });
 
   const applied: string[] = [];
+  const ready: string[] = [];
   const errors: Array<{ jobId: string; message: string }> = [];
   for (const job of eligible) {
     try {
-      await prepareAndApply(job.id);
-      applied.push(job.id);
+      const application = await prepareAndApply(job.id);
+      if (application.status === "applied") applied.push(job.id);
+      else ready.push(job.id);
     } catch (e) {
       errors.push({ jobId: job.id, message: e instanceof Error ? e.message : String(e) });
     }
   }
-  return { skipped: false, applied, errors };
+  return { skipped: false, applied, ready, errors };
 }
