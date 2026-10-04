@@ -157,7 +157,7 @@ model ResumeVersion {
 
 model SavedSearch {
   id         String   @id @default(cuid())
-  profileId  String
+  profileId  String   @default("me")
   profile    Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
   name       String
   query      String
