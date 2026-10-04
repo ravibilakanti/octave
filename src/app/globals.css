@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #0c1220;
+  --bg-elev: #141c2e;
+  --bg-soft: #1b2540;
+  --line: #2a3654;
+  --text: #e8eefc;
+  --muted: #9aa8c7;
+  --gold: #e2b657;
+  --gold-2: #f0d48a;
+  --teal: #6ee7c5;
+  --danger: #f87171;
+  --ok: #34d399;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100%;
+}
+
+body {
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background-image:
+    radial-gradient(1200px 500px at 10% -10%, rgba(226, 182, 87, 0.12), transparent 50%),
+    radial-gradient(900px 400px at 100% 0%, rgba(110, 231, 197, 0.08), transparent 45%);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+input,
+textarea,
+select,
+button {
+  font: inherit;
+}
+
+.card {
+  background: color-mix(in srgb, var(--bg-elev) 88%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+
+.gold-rule {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
